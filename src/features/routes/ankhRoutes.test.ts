@@ -1,6 +1,11 @@
 import { expect, test } from 'bun:test';
 
-import { AUTHORING_ANKH_ROUTE_IDS, resolveAnkhRouteId } from './ankhRoutes.js';
+import {
+  AUTHORING_ANKH_ROUTE_DELIVERIES,
+  AUTHORING_ANKH_ROUTE_IDS,
+  getAuthoringRouteDelivery,
+  resolveAnkhRouteId,
+} from './ankhRoutes.js';
 
 test('authoring route model covers the portable /ankh surface without host-owned routes', () => {
   expect(AUTHORING_ANKH_ROUTE_IDS).toEqual([
@@ -37,4 +42,40 @@ test('authoring route model covers the portable /ankh surface without host-owned
   expect(resolveAnkhRouteId('/ankh/screens/')).toBeNull();
   expect(resolveAnkhRouteId('/ankh/screens/one/extra')).toBeNull();
   expect(resolveAnkhRouteId('/ankh/screens/%E0%A4%A')).toBeNull();
+});
+
+test('authoring route delivery declarations preserve canonical patterns and fail closed on missing screens', () => {
+  expect(AUTHORING_ANKH_ROUTE_DELIVERIES.map(({ id }) => id)).toEqual([
+    ...AUTHORING_ANKH_ROUTE_IDS,
+  ]);
+  expect(AUTHORING_ANKH_ROUTE_DELIVERIES.map(({ pathPattern }) => pathPattern)).toEqual([
+    '/ankh/screens',
+    '/ankh/screens/:screenId',
+    '/ankh/media',
+    '/ankh/theme',
+    '/ankh/theme/colors',
+    '/ankh/theme/typography',
+    '/ankh/theme/spacing',
+    '/ankh/theme/radii',
+    '/ankh/theme/shadows',
+    '/ankh/theme/components/:recipeName',
+    '/ankh/theme/patterns/:recipeName',
+    '/ankh/bindings/:nodeId',
+    '/ankh/properties/:nodeId',
+  ]);
+  expect(getAuthoringRouteDelivery('screen-detail').parameters).toEqual([
+    { name: 'screenId', encoding: 'single-path-segment' },
+  ]);
+  expect(getAuthoringRouteDelivery('theme-component').parameters).toEqual([
+    { name: 'recipeName', encoding: 'single-path-segment' },
+  ]);
+  expect(getAuthoringRouteDelivery('properties').parameters).toEqual([
+    { name: 'nodeId', encoding: 'single-path-segment' },
+  ]);
+  expect(
+    AUTHORING_ANKH_ROUTE_DELIVERIES.every(({ screen }) => screen.status === 'unresolved'),
+  ).toBe(true);
+  expect(() => getAuthoringRouteDelivery('unknown' as never)).toThrow(
+    "Unknown Authoring route 'unknown'.",
+  );
 });
