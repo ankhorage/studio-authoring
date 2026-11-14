@@ -1,6 +1,6 @@
 {
   "name": "@ankhorage/studio-authoring",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Reusable authoring core for Ankhorage apps",
   "license": "MIT",
   "homepage": "https://github.com/ankhorage/studio-authoring#readme",

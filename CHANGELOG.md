@@ -1,3 +1,9 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- c47abae: Expose a host-independent manifest draft and save-state port for authoring consumers.
+
 All notable changes to this project are documented in this file.
