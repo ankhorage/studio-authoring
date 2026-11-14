@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "kind": "library",
+  "title": "Ankhorage Studio Authoring",
+  "summary": "Provides renderer-neutral authoring state and manifest policy for Ankhorage applications.",
+  "purpose": "Keep portable application-authoring behavior reusable outside the Studio host and independent from UI, persistence, and generated-project delivery.",
+  "domain": "application authoring",
+  "responsibilities": [
+    "Derive edit and preview interaction state.",
+    "Update screen metadata and requirements without changing screen identity or authored UI trees.",
+    "Resolve portable authoring routes, inspector targets, node selection, and runtime-overlay policy."
+  ],
+  "boundaries": [
+    "Does not own Studio host lifecycle, user interface composition, or renderer implementation.",
+    "Does not persist manifests or generate application files.",
+    "Does not own authentication, deployment, secrets, APIs, or other host-specific Studio routes."
+  ],
+  "audience": [
+    "Authoring hosts that need portable manifest and selection behavior.",
+    "Applications that embed Ankhorage authoring behavior without depending on Studio."
+  ],
+  "useCases": [
+    "Switch a host between edit and preview interaction modes.",
+    "Update one authored screen's metadata or declared requirements immutably.",
+    "Resolve an authoring route, inspector target, or selected tree node independent of a UI framework."
+  ],
+  "architecture": {
+    "role": "Standalone feature-first authoring policy library consumed by hosts through its public package facade.",
+    "invariants": [
+      "Authoring policy remains independent from UI frameworks, filesystems, network transports, and Studio host composition.",
+      "Manifest updates preserve portable contracts and authored identity.",
+      "Host-owned routes and side effects stay outside the package."
+    ]
+  },
+  "constraints": {
+    "platforms": ["Runtime-neutral TypeScript"],
+    "limitations": [
+      "The package exposes policy and transformations only; hosts provide persistence, rendering, and delivery adapters."
+    ]
+  }
+}
