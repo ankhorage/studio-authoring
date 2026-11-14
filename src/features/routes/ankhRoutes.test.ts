@@ -5,6 +5,7 @@ import {
   AUTHORING_ANKH_ROUTE_IDS,
   getAuthoringRouteDelivery,
   resolveAnkhRouteId,
+  UNRESOLVED_AUTHORING_SCREEN_OWNER_BOUNDARIES,
 } from './ankhRoutes.js';
 
 test('authoring route model covers the portable /ankh surface without host-owned routes', () => {
@@ -48,7 +49,7 @@ test('authoring route model covers the portable /ankh surface without host-owned
   expect(resolveAnkhRouteId('/ankh/properties/%E0%A4%A')).toBeNull();
 });
 
-test('authoring route delivery declarations preserve canonical patterns and fail closed on missing screens', () => {
+test('authoring route delivery declarations expose only packed public screens and document the remaining owners', () => {
   expect(AUTHORING_ANKH_ROUTE_DELIVERIES.map(({ id }) => id)).toEqual([
     ...AUTHORING_ANKH_ROUTE_IDS,
   ]);
@@ -76,9 +77,21 @@ test('authoring route delivery declarations preserve canonical patterns and fail
   expect(getAuthoringRouteDelivery('properties').parameters).toEqual([
     { name: 'nodeId', encoding: 'single-path-segment' },
   ]);
+  expect(getAuthoringRouteDelivery('screens').screen).toEqual({
+    status: 'available',
+    moduleSpecifier: '@ankhorage/studio-authoring/screens',
+    exportName: 'ScreensAuthoringScreen',
+  });
   expect(
-    AUTHORING_ANKH_ROUTE_DELIVERIES.every(({ screen }) => screen.status === 'unresolved'),
+    AUTHORING_ANKH_ROUTE_DELIVERIES.filter(({ id }) => id !== 'screens').every(
+      ({ screen }) => screen.status === 'unresolved',
+    ),
   ).toBe(true);
+  expect(UNRESOLVED_AUTHORING_SCREEN_OWNER_BOUNDARIES.properties).toEqual({
+    owner: '@ankhorage/studio-authoring',
+    missingPublicApi:
+      'A portable node-property document and mutation policy; ZORA publishes the generic property inspector adapter only.',
+  });
   expect(() => getAuthoringRouteDelivery('unknown' as never)).toThrow(
     "Unknown Authoring route 'unknown'.",
   );
