@@ -137,7 +137,7 @@ jobs:
           head_sha='${{ github.event.pull_request.head.sha }}'
           git branch --force main "$base_sha"
           export ANKH_PR_CHANGESET_FILES
-          ANKH_PR_CHANGESET_FILES="$(git diff --name-only --diff-filter=AMCR "$base_sha" "$head_sha" -- .changeset)"
+          ANKH_PR_CHANGESET_FILES="$(git diff --name-only --diff-filter=AMCR "$base_sha" "$head_sha" -- .changeset | grep -E '^\.changeset/[^/]+\.md$' | grep -v '^\.changeset/README\.md$' || true)"
           if [ -z "$ANKH_PR_CHANGESET_FILES" ]; then
             echo "No pull-request-owned Changeset files; no release requested."
             exit 0
