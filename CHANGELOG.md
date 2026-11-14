@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 27897ae: Expose a portable `/ankh/screens` authoring screen backed by released ZORA selection controls.
+
 ## 0.3.0
 
 ### Minor Changes
