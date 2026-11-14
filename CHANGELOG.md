@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- f16978f: Publish portable `/ankh` route-delivery declarations with canonical path patterns, encoded parameter contracts, and explicit unresolved-screen requirements for generated-app runtimes.
+
 ## 0.2.0
 
 ### Minor Changes
