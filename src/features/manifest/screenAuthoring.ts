@@ -1,33 +1,20 @@
-import type {
-  AppManifest,
-  ScreenMetadataSpec,
-  ScreenRequirements,
-} from "@ankhorage/contracts";
+import type { AppManifest, ScreenMetadataSpec, ScreenRequirements } from '@ankhorage/contracts';
 
 /*** Update one screen's metadata without changing its identity, UI tree, or route ownership. */
-export function updateScreenMetadata<
-  TManifest extends Pick<AppManifest, "screens">,
->(
+export function updateScreenMetadata<TManifest extends Pick<AppManifest, 'screens'>>(
   manifest: TManifest,
   screenId: string,
   metadata: ScreenMetadataSpec,
 ): { readonly ok: boolean; readonly manifest: TManifest } {
-  const screen = manifest.screens[screenId];
-  if (!screen || screen.id !== screenId || metadata.id !== screenId)
-    return { ok: false, manifest };
-  const {
-    title: _title,
-    description: _description,
-    ...withoutMetadata
-  } = screen;
+  const screen = Object.entries(manifest.screens).find(([id]) => id === screenId)?.[1];
+  if (screen?.id !== screenId || metadata.id !== screenId) return { ok: false, manifest };
+  const { title: _title, description: _description, ...withoutMetadata } = screen;
   const nextScreen = {
     ...withoutMetadata,
     id: metadata.id,
     name: metadata.name,
     ...(metadata.title === undefined ? {} : { title: metadata.title }),
-    ...(metadata.description === undefined
-      ? {}
-      : { description: metadata.description }),
+    ...(metadata.description === undefined ? {} : { description: metadata.description }),
   };
   return {
     ok: true,
@@ -39,15 +26,13 @@ export function updateScreenMetadata<
 }
 
 /*** Update one screen's explicit requirements and omit empty requirement families. */
-export function updateScreenRequirements<
-  TManifest extends Pick<AppManifest, "screens">,
->(
+export function updateScreenRequirements<TManifest extends Pick<AppManifest, 'screens'>>(
   manifest: TManifest,
   screenId: string,
   requirements: ScreenRequirements | undefined,
 ): { readonly ok: boolean; readonly manifest: TManifest } {
-  const screen = manifest.screens[screenId];
-  if (!screen || screen.id !== screenId) return { ok: false, manifest };
+  const screen = Object.entries(manifest.screens).find(([id]) => id === screenId)?.[1];
+  if (screen?.id !== screenId) return { ok: false, manifest };
   const { requires: _requires, ...withoutRequirements } = screen;
   const normalized = normalizeRequirements(requirements);
   const nextScreen = {
@@ -73,8 +58,7 @@ function normalizeRequirements(
       ? requirements.permissions
       : undefined;
   const capabilities =
-    requirements.capabilities &&
-    Object.keys(requirements.capabilities).length > 0
+    requirements.capabilities && Object.keys(requirements.capabilities).length > 0
       ? requirements.capabilities
       : undefined;
   return permissions || capabilities

@@ -1,9 +1,5 @@
-import { arrayToSingleSelection } from "@ankhorage/utility/selection";
-import {
-  findTreeNodeWithParent,
-  treeContainsId,
-  type TreeAdapter,
-} from "@ankhorage/utility/tree";
+import { arrayToSingleSelection } from '@ankhorage/utility/selection';
+import { findTreeNodeWithParent, type TreeAdapter, treeContainsId } from '@ankhorage/utility/tree';
 
 /*** Describe one selectable authoring node independent of a renderer implementation. */
 export interface AuthoringTreeNode {
@@ -22,9 +18,7 @@ export function resolveSelectedNodeId(
   root: AuthoringTreeNode | null,
   selectedNodeId: string | null,
 ): string | null {
-  return selectedNodeId &&
-    root &&
-    treeContainsId(root, selectedNodeId, authoringTreeAdapter)
+  return selectedNodeId && root && treeContainsId(root, selectedNodeId, authoringTreeAdapter)
     ? selectedNodeId
     : null;
 }
@@ -35,10 +29,7 @@ export function resolveSelectedParentNodeId(
   selectedNodeId: string | null,
 ): string | null {
   if (!root || !selectedNodeId || root.id === selectedNodeId) return null;
-  return (
-    findTreeNodeWithParent(root, selectedNodeId, authoringTreeAdapter)?.parent
-      ?.id ?? null
-  );
+  return findTreeNodeWithParent(root, selectedNodeId, authoringTreeAdapter)?.parent?.id ?? null;
 }
 
 /*** Normalize a selection-provider change to one nullable selection value. */
