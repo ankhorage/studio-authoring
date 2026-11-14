@@ -1,7 +1,4 @@
-import {
-  decodeFirstPathSegmentAfterPrefix,
-  decodeSinglePathSegmentAfterPrefix,
-} from '@ankhorage/utility/url';
+import { decodeSinglePathSegmentAfterPrefix } from '@ankhorage/utility/url';
 
 /*** Define portable `/ankh` routes owned by the reusable authoring core. */
 export type AnkhRouteId =
@@ -192,10 +189,10 @@ export function resolveAnkhRouteId(pathname: string): AnkhRouteId | null {
       : null;
   }
   if (pathname.startsWith(BINDINGS_ROUTE_PREFIX)) {
-    return decodeFirstPathSegmentAfterPrefix(pathname, BINDINGS_ROUTE_PREFIX) ? 'bindings' : null;
+    return decodeSinglePathSegmentAfterPrefix(pathname, BINDINGS_ROUTE_PREFIX) ? 'bindings' : null;
   }
   if (pathname.startsWith(PROPERTIES_ROUTE_PREFIX)) {
-    return decodeFirstPathSegmentAfterPrefix(pathname, PROPERTIES_ROUTE_PREFIX)
+    return decodeSinglePathSegmentAfterPrefix(pathname, PROPERTIES_ROUTE_PREFIX)
       ? 'properties'
       : null;
   }

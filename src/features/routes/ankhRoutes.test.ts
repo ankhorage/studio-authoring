@@ -42,6 +42,10 @@ test('authoring route model covers the portable /ankh surface without host-owned
   expect(resolveAnkhRouteId('/ankh/screens/')).toBeNull();
   expect(resolveAnkhRouteId('/ankh/screens/one/extra')).toBeNull();
   expect(resolveAnkhRouteId('/ankh/screens/%E0%A4%A')).toBeNull();
+  expect(resolveAnkhRouteId('/ankh/bindings/one/extra')).toBeNull();
+  expect(resolveAnkhRouteId('/ankh/bindings/%E0%A4%A')).toBeNull();
+  expect(resolveAnkhRouteId('/ankh/properties/one/extra')).toBeNull();
+  expect(resolveAnkhRouteId('/ankh/properties/%E0%A4%A')).toBeNull();
 });
 
 test('authoring route delivery declarations preserve canonical patterns and fail closed on missing screens', () => {
