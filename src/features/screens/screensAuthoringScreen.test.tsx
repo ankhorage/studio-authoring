@@ -9,8 +9,10 @@ const control =
   ({ children, ...props }: { readonly children?: ReactNode } & Record<string, unknown>) =>
     createElement(type, props, children);
 
+const authoringSelectionAdapter = mock(() => null);
+
 void mock.module('@ankhorage/zora/authoring', () => ({
-  AuthoringSelectionAdapter: () => null,
+  AuthoringSelectionAdapter: authoringSelectionAdapter,
   Button: control('Button'),
   Card: control('Card'),
   Field: control('Field'),
@@ -101,6 +103,37 @@ test('screen creation displays a fallback error when the host rejects without a 
   await createScreen(renderer);
 
   expect(JSON.stringify(renderer.toJSON())).toContain('The screen could not be created.');
+});
+
+test('blank external errors do not hide a rejected host acknowledgement', async () => {
+  const renderer = await renderScreen({
+    ...createProps(() => Promise.resolve({ status: 'rejected', message: 'Name already exists.' })),
+    error: '   ',
+  });
+
+  await setDraft(renderer, 'Dashboard');
+  await createScreen(renderer);
+
+  expect(JSON.stringify(renderer.toJSON())).toContain('Name already exists.');
+});
+
+test('invalid screen identities show their diagnostic without mounting the ZORA selection adapter', async () => {
+  for (const screens of [
+    [
+      { id: 'home', name: 'Home' },
+      { id: 'home', name: 'Duplicate home' },
+    ],
+    [{ id: '', name: 'Missing id' }],
+  ]) {
+    authoringSelectionAdapter.mockClear();
+    const renderer = await renderScreen({
+      screens,
+      error: ' ',
+    });
+
+    expect(authoringSelectionAdapter).not.toHaveBeenCalled();
+    expect(JSON.stringify(renderer.toJSON())).toContain('Screen selection unavailable');
+  }
 });
 
 test('screen creation preserves a draft and displays a rejected host operation', async () => {

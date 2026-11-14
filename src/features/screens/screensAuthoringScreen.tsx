@@ -42,7 +42,11 @@ export function ScreensAuthoringScreen({
 }: ScreensAuthoringScreenProps) {
   const state = deriveAuthoringScreenListState(screens);
   const creation = useScreenCreation(onCreateScreen, disabled);
-  const message = error ?? creation.error ?? state.diagnostic?.message;
+  const message = getVisibleScreenAuthoringMessage(
+    error,
+    creation.error,
+    state.diagnostic?.message,
+  );
 
   return (
     <View gap="m">
@@ -53,12 +57,25 @@ export function ScreensAuthoringScreen({
         disabled={
           disabled || state.diagnostic !== undefined || onScreenSelectionChange === undefined
         }
+        diagnostic={state.diagnostic?.message}
         onScreenSelectionChange={onScreenSelectionChange}
         screens={screens}
         selectedScreenId={selectedScreenId}
       />
     </View>
   );
+}
+
+/*** Prefer meaningful host errors without allowing blank host state to hide an internal diagnostic. */
+function getVisibleScreenAuthoringMessage(
+  externalError: string | undefined,
+  creationError: string | null,
+  diagnostic: string | undefined,
+): string | undefined {
+  const normalizedExternalError = externalError?.trim();
+  const visibleExternalError =
+    normalizedExternalError?.length === 0 ? undefined : normalizedExternalError;
+  return visibleExternalError ?? creationError ?? diagnostic;
 }
 
 /*** Retain a screen-name draft until the host explicitly confirms that it saved the mutation. */
@@ -177,8 +194,10 @@ function ScreenList({
   selectedScreenId,
   onScreenSelectionChange,
   disabled,
+  diagnostic,
 }: Pick<ScreensAuthoringScreenProps, 'screens' | 'selectedScreenId' | 'onScreenSelectionChange'> & {
   readonly disabled: boolean;
+  readonly diagnostic?: string;
 }) {
   if (screens.length === 0) {
     return (
@@ -187,6 +206,18 @@ function ScreenList({
           <Text weight="semiBold">No screens available</Text>
           <Text color="neutral" emphasis="muted" variant="bodySmall">
             The current manifest did not provide any canonical screens.
+          </Text>
+        </View>
+      </Card>
+    );
+  }
+  if (diagnostic !== undefined) {
+    return (
+      <Card p="m" variant="outline">
+        <View gap="xs">
+          <Text weight="semiBold">Screen selection unavailable</Text>
+          <Text color="neutral" emphasis="muted" variant="bodySmall">
+            Correct the manifest screen identities before selecting a screen.
           </Text>
         </View>
       </Card>
