@@ -5,12 +5,13 @@ import { join } from 'node:path';
 
 test('packed package keeps its portable root runtime-importable without UI peers', async () => {
   const workspace = await mkdtemp(join(tmpdir(), 'studio-authoring-packed-core-consumer-'));
+  const npmCacheDirectory = join(workspace, 'npm-cache');
   const packageDirectory = join(workspace, 'package');
   const consumerDirectory = join(workspace, 'consumer');
 
   try {
     await Bun.$`mkdir -p ${packageDirectory} ${consumerDirectory}`;
-    await Bun.$`npm pack --ignore-scripts --pack-destination ${packageDirectory}`;
+    await Bun.$`npm --cache ${npmCacheDirectory} pack --ignore-scripts --pack-destination ${packageDirectory}`;
     const archive = (await readdir(packageDirectory)).find((file) => file.endsWith('.tgz'));
     expect(archive).toBeDefined();
     await writeFile(
@@ -35,7 +36,6 @@ test('packed package keeps its portable root runtime-importable without UI peers
         }
       `,
     );
-
     await Bun.$`bun install --cwd ${consumerDirectory}`;
     const result = await Bun.$`bun ${join(consumerDirectory, 'index.mjs')}`.quiet();
     expect(result.exitCode).toBe(0);
@@ -44,14 +44,15 @@ test('packed package keeps its portable root runtime-importable without UI peers
   }
 }, 30_000);
 
-test('packed screen subpath imports and renders with published UI dependencies', async () => {
+test('packed screen subpath exposes its public props to a consumer using released ZORA peers', async () => {
   const workspace = await mkdtemp(join(tmpdir(), 'studio-authoring-packed-screen-consumer-'));
+  const npmCacheDirectory = join(workspace, 'npm-cache');
   const packageDirectory = join(workspace, 'package');
   const consumerDirectory = join(workspace, 'consumer');
 
   try {
     await Bun.$`mkdir -p ${packageDirectory} ${consumerDirectory}`;
-    await Bun.$`npm pack --ignore-scripts --pack-destination ${packageDirectory}`;
+    await Bun.$`npm --cache ${npmCacheDirectory} pack --ignore-scripts --pack-destination ${packageDirectory}`;
     const archive = (await readdir(packageDirectory)).find((file) => file.endsWith('.tgz'));
     expect(archive).toBeDefined();
     await writeFile(
@@ -64,52 +65,49 @@ test('packed screen subpath imports and renders with published UI dependencies',
           '@ankhorage/studio-authoring': `file:${join(packageDirectory, archive!)}`,
           '@ankhorage/zora': '^27.1.0',
           react: '19.2.3',
-          'react-test-renderer': '19.2.3',
+          'react-native': '0.86.3',
+          typescript: '^5.9.3',
         },
       }),
     );
     await writeFile(
-      join(consumerDirectory, 'preload.mjs'),
+      join(consumerDirectory, 'tsconfig.json'),
       `
-        import { mock } from 'bun:test';
-        import { createElement } from 'react';
-
-        const control = (type) => ({ children, ...props }) => createElement(type, props, children);
-        mock.module('@ankhorage/zora/authoring', () => ({
-          AuthoringSelectionAdapter: () => null,
-        }));
-        mock.module('@ankhorage/zora/reader-free', () => ({
-          Button: control('Button'),
-          Card: control('Card'),
-          Text: control('Text'),
-          TextInput: control('TextInput'),
-          View: control('View'),
-        }));
+        {
+          "compilerOptions": {
+            "jsx": "react-jsx",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "noEmit": true,
+            "strict": true,
+            "skipLibCheck": true
+          },
+          "include": ["screen-contract.tsx"]
+        }
       `,
     );
     await writeFile(
-      join(consumerDirectory, 'index.mjs'),
+      join(consumerDirectory, 'screen-contract.tsx'),
       `
-        import { createElement } from 'react';
-        import { act, create } from 'react-test-renderer';
-        import { ScreensAuthoringScreen } from '@ankhorage/studio-authoring/screens';
+        import {
+          ScreensAuthoringScreen,
+          type ScreensAuthoringScreenProps,
+        } from '@ankhorage/studio-authoring/screens';
 
-        globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-        let renderer;
-        await act(async () => {
-          renderer = create(createElement(ScreensAuthoringScreen, {
-            screens: [],
-            onCreateScreen: async () => ({ status: 'saved' }),
-          }));
-        });
-        if (renderer.toJSON() === null) throw new Error('Screen did not render.');
+        const props: ScreensAuthoringScreenProps = {
+          screens: [{ id: 'home', name: 'Home' }],
+          selectedScreenId: 'home',
+          onScreenSelectionChange: (screen) => console.log(screen?.id),
+          onCreateScreen: async () => ({ status: 'saved' }),
+        };
+
+        void [props, ScreensAuthoringScreen];
       `,
     );
-
     await Bun.$`bun install --cwd ${consumerDirectory}`;
-    const result =
-      await Bun.$`bun --preload ${join(consumerDirectory, 'preload.mjs')} ${join(consumerDirectory, 'index.mjs')}`.quiet();
-    expect(result.exitCode).toBe(0);
+    const typecheck =
+      await Bun.$`bun ${join(consumerDirectory, 'node_modules/typescript/bin/tsc')} --noEmit -p ${join(consumerDirectory, 'tsconfig.json')}`.quiet();
+    expect(typecheck.exitCode).toBe(0);
   } finally {
     await rm(workspace, { force: true, recursive: true });
   }

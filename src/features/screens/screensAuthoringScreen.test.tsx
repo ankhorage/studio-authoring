@@ -95,6 +95,19 @@ test('screen creation preserves a rejected draft and displays the host error', a
   ]);
 });
 
+test('screen creation displays a fallback error when the host rejects without a message', async () => {
+  const renderer = await renderScreen(
+    createProps(() => Promise.resolve({ status: 'rejected', message: '   ' })),
+  );
+
+  await setDraft(renderer, 'Dashboard');
+  await createScreen(renderer);
+
+  expect(renderer.root.findAllByType('Text' as never).at(-1)?.children).toEqual([
+    'The screen could not be created.',
+  ]);
+});
+
 test('screen creation preserves a draft and displays a rejected host operation', async () => {
   const renderer = await renderScreen(
     createProps(() => Promise.reject(new Error('Manifest write failed.'))),
@@ -126,4 +139,38 @@ test('screen creation remains unavailable without a host command or when disable
     false,
   );
   expect(disabled.root.findByType('Button' as never).props.disabled).toBe(true);
+});
+
+test('screen creation admits one immediate submission and allows a retry after rejection', async () => {
+  let rejectFirstCreation!: (cause: Error) => void;
+  const firstCreation = new Promise<never>((_resolve, reject) => {
+    rejectFirstCreation = reject;
+  });
+  const onCreateScreen = mock(() =>
+    onCreateScreen.mock.calls.length === 1
+      ? firstCreation
+      : Promise.resolve({ status: 'saved' as const }),
+  );
+  const renderer = await renderScreen(createProps(onCreateScreen));
+
+  await setDraft(renderer, 'Dashboard');
+  await act(() => {
+    const button = renderer.root.findByType('Button' as never) as unknown as {
+      readonly props: TestControlProps;
+    };
+    button.props.onPress?.();
+    button.props.onPress?.();
+  });
+
+  expect(onCreateScreen).toHaveBeenCalledTimes(1);
+
+  await act(async () => {
+    rejectFirstCreation(new Error('Manifest write failed.'));
+    await Promise.resolve();
+  });
+
+  await createScreen(renderer);
+
+  expect(onCreateScreen).toHaveBeenCalledTimes(2);
+  expect(renderer.root.findByProps({ accessibilityLabel: 'New screen name' }).props.value).toBe('');
 });

@@ -1,6 +1,6 @@
 import { AuthoringSelectionAdapter } from '@ankhorage/zora/authoring';
 import { Button, Card, Text, TextInput, View } from '@ankhorage/zora/reader-free';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import {
   type AuthoringScreenListItem,
@@ -69,29 +69,43 @@ function useScreenCreation(
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const isCreatingRef = useRef(false);
   const canCreate =
     !disabled && !isCreating && name.trim().length > 0 && onCreateScreen !== undefined;
 
-  /*** Send a non-empty draft to the host while preserving it unless the host confirms persistence. */
+  /*** Send one non-empty draft to the host while preserving it unless the host confirms persistence. */
   const create = async () => {
-    if (!canCreate) return;
+    const draft = name.trim();
+    if (disabled || isCreatingRef.current || draft.length === 0 || onCreateScreen === undefined)
+      return;
+
+    isCreatingRef.current = true;
     setError(null);
     setIsCreating(true);
     try {
-      const acknowledgement = await onCreateScreen(name.trim());
+      const acknowledgement = await onCreateScreen(draft);
       if (acknowledgement.status === 'saved') {
         setName('');
       } else {
-        setError(acknowledgement.message);
+        setError(getScreenCreationError(acknowledgement.message));
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'The screen could not be created.');
+      setError(getScreenCreationError(cause instanceof Error ? cause.message : undefined));
     } finally {
+      isCreatingRef.current = false;
       setIsCreating(false);
     }
   };
 
   return { name, setName, error, isCreating, canCreate, create };
+}
+
+/*** Preserve a visible, retryable failure when a host declines to supply an error message. */
+function getScreenCreationError(message: string | undefined): string {
+  const normalizedMessage = message?.trim();
+  return normalizedMessage === undefined || normalizedMessage.length === 0
+    ? 'The screen could not be created.'
+    : normalizedMessage;
 }
 
 /*** Identify the portable screen capability and its host-owned manifest boundary. */
