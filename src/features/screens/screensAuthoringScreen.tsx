@@ -15,10 +15,14 @@ export interface ScreensAuthoringScreenProps {
   readonly screens: readonly AuthoringScreenListItem[];
   readonly selectedScreenId?: string;
   readonly onScreenSelectionChange?: (screen: AuthoringScreenListItem | null) => void;
-  readonly onCreateScreen?: (name: string) => void | Promise<void>;
+  readonly onCreateScreen?: (name: string) => Promise<ScreenCreationAcknowledgement>;
   readonly disabled?: boolean;
   readonly error?: string;
 }
+
+/*** Represent the host's explicit outcome for a requested manifest mutation. */
+export type ScreenCreationAcknowledgement =
+  { readonly status: 'saved' } | { readonly status: 'rejected'; readonly message: string };
 
 interface ScreenSelectionRenderState {
   readonly item: AuthoringScreenListItem;
@@ -57,7 +61,7 @@ export function ScreensAuthoringScreen({
   );
 }
 
-/*** Retain a screen-name draft until the host command succeeds or returns a visible failure. */
+/*** Retain a screen-name draft until the host explicitly confirms that it saved the mutation. */
 function useScreenCreation(
   onCreateScreen: ScreensAuthoringScreenProps['onCreateScreen'],
   disabled: boolean,
@@ -68,14 +72,18 @@ function useScreenCreation(
   const canCreate =
     !disabled && !isCreating && name.trim().length > 0 && onCreateScreen !== undefined;
 
-  /*** Send a non-empty draft to the host while preserving it if that operation rejects. */
+  /*** Send a non-empty draft to the host while preserving it unless the host confirms persistence. */
   const create = async () => {
     if (!canCreate) return;
     setError(null);
     setIsCreating(true);
     try {
-      await onCreateScreen(name.trim());
-      setName('');
+      const acknowledgement = await onCreateScreen(name.trim());
+      if (acknowledgement.status === 'saved') {
+        setName('');
+      } else {
+        setError(acknowledgement.message);
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'The screen could not be created.');
     } finally {

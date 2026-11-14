@@ -79,7 +79,7 @@ test('authoring route delivery declarations expose only packed public screens an
   ]);
   expect(getAuthoringRouteDelivery('screens').screen).toEqual({
     status: 'available',
-    moduleSpecifier: '@ankhorage/studio-authoring',
+    moduleSpecifier: '@ankhorage/studio-authoring/screens',
     exportName: 'ScreensAuthoringScreen',
   });
   expect(

@@ -66,7 +66,7 @@ const UNRESOLVED_AUTHORING_SCREEN: UnresolvedAuthoringRouteScreen = {
 
 const SCREENS_AUTHORING_SCREEN: AvailableAuthoringRouteScreen = {
   status: 'available',
-  moduleSpecifier: '@ankhorage/studio-authoring',
+  moduleSpecifier: '@ankhorage/studio-authoring/screens',
   exportName: 'ScreensAuthoringScreen',
 };
 
