@@ -1,5 +1,5 @@
 import { AuthoringSelectionAdapter } from '@ankhorage/zora/authoring';
-import { Button, Card, Text, TextInput, View } from '@ankhorage/zora/reader-free';
+import { Button, Card, Field, Text, TextInput, View } from '@ankhorage/zora/authoring';
 import { useRef, useState } from 'react';
 
 import {
@@ -111,8 +111,8 @@ function getScreenCreationError(message: string | undefined): string {
 /*** Identify the portable screen capability and its host-owned manifest boundary. */
 function ScreenHeading() {
   return (
-    <View gap="xs">
-      <Text variant="lead" weight="semiBold">
+    <View accessibilityRole="header" gap="xs">
+      <Text variant="body" weight="semiBold">
         Screens
       </Text>
       <Text color="neutral" emphasis="muted" variant="bodySmall">
@@ -125,8 +125,11 @@ function ScreenHeading() {
 /*** Render a host or validation failure without pretending that an authoring operation succeeded. */
 function ScreenAuthoringError({ message }: { readonly message: string }) {
   return (
-    <Card title="Screen authoring unavailable" tone="outline">
-      <Text color="danger">{message}</Text>
+    <Card p="m" variant="outline">
+      <View gap="xs">
+        <Text weight="semiBold">Screen authoring unavailable</Text>
+        <Text color="danger">{message}</Text>
+      </View>
     </Card>
   );
 }
@@ -142,23 +145,24 @@ function CreateScreenCard({
   readonly onCreateScreen: ScreensAuthoringScreenProps['onCreateScreen'];
 }) {
   return (
-    <Card
-      title="Create screen"
-      description={
-        onCreateScreen
-          ? 'The host assigns identity and persists the manifest mutation.'
-          : 'Creation is unavailable because no host manifest command was supplied.'
-      }
-    >
+    <Card p="m" variant="outline">
       <View gap="s">
-        <TextInput
-          accessibilityLabel="New screen name"
-          editable={!disabled && !creation.isCreating && onCreateScreen !== undefined}
-          onChangeText={creation.setName}
-          onSubmitEditing={() => void creation.create()}
-          placeholder="Screen name"
-          value={creation.name}
-        />
+        <Text weight="semiBold">Create screen</Text>
+        <Text color="neutral" emphasis="muted" variant="bodySmall">
+          {onCreateScreen
+            ? 'The host assigns identity and persists the manifest mutation.'
+            : 'Creation is unavailable because no host manifest command was supplied.'}
+        </Text>
+        <Field label="New screen name">
+          <TextInput
+            accessibilityLabel="New screen name"
+            disabled={disabled || creation.isCreating || onCreateScreen === undefined}
+            onChangeText={creation.setName}
+            onSubmitEditing={() => void creation.create()}
+            placeholder="Screen name"
+            value={creation.name}
+          />
+        </Field>
         <Button disabled={!creation.canCreate} onPress={() => void creation.create()}>
           Create screen
         </Button>
@@ -178,10 +182,14 @@ function ScreenList({
 }) {
   if (screens.length === 0) {
     return (
-      <Card
-        title="No screens available"
-        description="The current manifest did not provide any canonical screens."
-      />
+      <Card p="m" variant="outline">
+        <View gap="xs">
+          <Text weight="semiBold">No screens available</Text>
+          <Text color="neutral" emphasis="muted" variant="bodySmall">
+            The current manifest did not provide any canonical screens.
+          </Text>
+        </View>
+      </Card>
     );
   }
   return (
@@ -207,19 +215,23 @@ function renderScreenSelectionItem({
   select,
 }: ScreenSelectionRenderState) {
   return (
-    <Card
-      actions={
+    <Card p="m" variant={selected ? 'raised' : 'outline'}>
+      <View gap="s">
+        <View gap="xs">
+          <Text weight="semiBold">{getAuthoringScreenLabel(item)}</Text>
+          {item.description ? (
+            <Text color="neutral" emphasis="muted" variant="bodySmall">
+              {item.description}
+            </Text>
+          ) : null}
+          <Text color="neutral" emphasis="muted" variant="caption">
+            {item.id}
+          </Text>
+        </View>
         <Button disabled={disabled} onPress={select} variant={selected ? 'solid' : 'outline'}>
           {selected ? 'Selected' : 'Select'}
         </Button>
-      }
-      description={item.description}
-      title={getAuthoringScreenLabel(item)}
-      tone={selected ? 'default' : 'outline'}
-    >
-      <Text color="neutral" emphasis="muted" variant="caption">
-        {item.id}
-      </Text>
+      </View>
     </Card>
   );
 }

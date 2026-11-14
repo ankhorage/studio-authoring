@@ -11,10 +11,9 @@ const control =
 
 void mock.module('@ankhorage/zora/authoring', () => ({
   AuthoringSelectionAdapter: () => null,
-}));
-void mock.module('@ankhorage/zora/reader-free', () => ({
   Button: control('Button'),
   Card: control('Card'),
+  Field: control('Field'),
   Text: control('Text'),
   TextInput: control('TextInput'),
   View: control('View'),
@@ -24,7 +23,6 @@ const { ScreensAuthoringScreen } = await import('./screensAuthoringScreen.js');
 
 interface TestControlProps {
   readonly disabled?: boolean;
-  readonly editable?: boolean;
   readonly onChangeText?: (name: string) => void;
   readonly onPress?: () => void;
   readonly value?: string;
@@ -65,6 +63,7 @@ async function createScreen(renderer: ReactTestRenderer) {
     };
     button.props.onPress?.();
     await Promise.resolve();
+    await Promise.resolve();
   });
 }
 
@@ -90,9 +89,7 @@ test('screen creation preserves a rejected draft and displays the host error', a
   expect(renderer.root.findByProps({ accessibilityLabel: 'New screen name' }).props.value).toBe(
     'Dashboard',
   );
-  expect(renderer.root.findAllByType('Text' as never).at(-1)?.children).toEqual([
-    'Name already exists.',
-  ]);
+  expect(JSON.stringify(renderer.toJSON())).toContain('Name already exists.');
 });
 
 test('screen creation displays a fallback error when the host rejects without a message', async () => {
@@ -103,9 +100,7 @@ test('screen creation displays a fallback error when the host rejects without a 
   await setDraft(renderer, 'Dashboard');
   await createScreen(renderer);
 
-  expect(renderer.root.findAllByType('Text' as never).at(-1)?.children).toEqual([
-    'The screen could not be created.',
-  ]);
+  expect(JSON.stringify(renderer.toJSON())).toContain('The screen could not be created.');
 });
 
 test('screen creation preserves a draft and displays a rejected host operation', async () => {
@@ -119,24 +114,22 @@ test('screen creation preserves a draft and displays a rejected host operation',
   expect(renderer.root.findByProps({ accessibilityLabel: 'New screen name' }).props.value).toBe(
     'Dashboard',
   );
-  expect(renderer.root.findAllByType('Text' as never).at(-1)?.children).toEqual([
-    'Manifest write failed.',
-  ]);
+  expect(JSON.stringify(renderer.toJSON())).toContain('Manifest write failed.');
 });
 
 test('screen creation remains unavailable without a host command or when disabled', async () => {
   const unavailable = await renderScreen(createProps());
   expect(
-    unavailable.root.findByProps({ accessibilityLabel: 'New screen name' }).props.editable,
-  ).toBe(false);
+    unavailable.root.findByProps({ accessibilityLabel: 'New screen name' }).props.disabled,
+  ).toBe(true);
   expect(unavailable.root.findByType('Button' as never).props.disabled).toBe(true);
 
   const disabled = await renderScreen({
     ...createProps(() => Promise.resolve({ status: 'saved' as const })),
     disabled: true,
   });
-  expect(disabled.root.findByProps({ accessibilityLabel: 'New screen name' }).props.editable).toBe(
-    false,
+  expect(disabled.root.findByProps({ accessibilityLabel: 'New screen name' }).props.disabled).toBe(
+    true,
   );
   expect(disabled.root.findByType('Button' as never).props.disabled).toBe(true);
 });
