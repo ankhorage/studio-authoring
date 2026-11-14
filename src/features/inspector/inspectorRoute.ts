@@ -1,3 +1,5 @@
+import { appendEncodedPathSegment } from "@ankhorage/utility/url";
+
 /*** Identify an inspector target owned by the authoring core. */
 export type InspectorTarget = "properties" | "bindings";
 
@@ -6,5 +8,5 @@ export function createInspectorRoute(
   target: InspectorTarget,
   nodeId: string,
 ): string {
-  return `/ankh/${target}/${encodeURIComponent(nodeId)}`;
+  return appendEncodedPathSegment(`/ankh/${target}`, nodeId);
 }
