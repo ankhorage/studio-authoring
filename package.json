@@ -35,7 +35,8 @@
     },
     "./screens": {
       "types": "./dist/screens.d.ts",
-      "import": "./dist/screens.js"
+      "browser": "./dist/screens.js",
+      "react-native": "./dist/screens.js"
     }
   },
   "scripts": {
