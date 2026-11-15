@@ -37,10 +37,6 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           base_sha='${{ github.event.pull_request.base.sha }}'
-          if ! git cat-file -e "${base_sha}:package.json" 2>/dev/null; then
-            echo "Base revision has no package manifest; skipping version rollback validation."
-            exit 0
-          fi
           base_version="$(git show "${base_sha}:package.json" | node -e "let source=''; process.stdin.on('data',(chunk)=>source+=chunk); process.stdin.on('end',()=>process.stdout.write(JSON.parse(source).version ?? ''))")"
           candidate_version="$(node -p "require('./package.json').version")"
           BASE_VERSION="$base_version" CANDIDATE_VERSION="$candidate_version" node -e '
@@ -77,7 +73,7 @@ jobs:
           if node -e "const p=require('./package.json'); process.exit(p.name === '@ankhorage/doctor' ? 0 : 1)"; then
             bun ./dist/cli/standalone.js validate .
           else
-            BUN_INSTALL_CACHE_DIR="${RUNNER_TEMP}/doctor-cache" bunx @ankhorage/doctor@0.14.35 validate .
+            BUN_INSTALL_CACHE_DIR="${RUNNER_TEMP}/doctor-cache" bunx @ankhorage/doctor@0.14.36 validate .
           fi
 
       - name: Run lint
@@ -137,7 +133,7 @@ jobs:
           head_sha='${{ github.event.pull_request.head.sha }}'
           git branch --force main "$base_sha"
           export ANKH_PR_CHANGESET_FILES
-          ANKH_PR_CHANGESET_FILES="$(git diff --name-only --diff-filter=AMCR "$base_sha" "$head_sha" -- .changeset | grep -E '^\.changeset/[^/]+\.md$' | grep -v '^\.changeset/README\.md$' || true)"
+          ANKH_PR_CHANGESET_FILES="$(git diff --name-only --diff-filter=AMCR "$base_sha" "$head_sha" -- .changeset)"
           if [ -z "$ANKH_PR_CHANGESET_FILES" ]; then
             echo "No pull-request-owned Changeset files; no release requested."
             exit 0

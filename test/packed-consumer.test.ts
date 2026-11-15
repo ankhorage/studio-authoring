@@ -40,6 +40,14 @@ test('packed package keeps its portable root runtime-importable without UI peers
     await Bun.$`bun install --cwd ${consumerDirectory}`;
     const result = await Bun.$`bun ${join(consumerDirectory, 'index.mjs')}`.quiet();
     expect(result.exitCode).toBe(0);
+    const installedManifest = await Bun.file(
+      join(consumerDirectory, 'node_modules/@ankhorage/studio-authoring/package.json'),
+    ).json();
+    expect(installedManifest.exports['./screens']).toEqual({
+      types: './dist/screens.d.ts',
+      browser: './dist/screens.js',
+      'react-native': './dist/screens.js',
+    });
   } finally {
     await rm(workspace, { force: true, recursive: true });
   }
