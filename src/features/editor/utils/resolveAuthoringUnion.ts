@@ -85,8 +85,8 @@ function resolveVariant(
       'Union variant must define required discriminator "' + discriminator + '".',
     );
   }
-  const [value, extra] = field.structure.values;
-  if (value === undefined || extra !== undefined) {
+  const [value] = field.structure.values;
+  if (field.structure.values.length !== 1) {
     return unsupported(
       path,
       'Union discriminator "' + discriminator + '" must have one literal value.',
