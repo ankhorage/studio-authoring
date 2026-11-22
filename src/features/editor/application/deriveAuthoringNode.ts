@@ -25,7 +25,7 @@ export interface DeriveAuthoringNodeArgs {
   readonly inheritedReadOnly: boolean;
 }
 type DeriveNode = (args: DeriveAuthoringNodeArgs) => AuthoringNode;
-type Base = {
+interface Base {
   readonly path: readonly string[];
   readonly label: string;
   readonly description?: string;
@@ -33,7 +33,7 @@ type Base = {
   readonly readOnly: boolean;
   readonly editor?: NonNullable<AuthoringPresentationPolicy['editor']>;
   readonly inheritance?: { readonly value?: AuthoringPrimitive; readonly overridden: boolean };
-};
+}
 
 /*** Dispatch one structural node to its portable authoring-model derivation. */
 export function deriveAuthoringNode(

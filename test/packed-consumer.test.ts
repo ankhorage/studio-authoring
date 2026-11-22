@@ -53,7 +53,13 @@ test('packed package keeps its portable root runtime-importable without UI peers
   }
 }, 30_000);
 
-test('packed screen subpath exposes its public props to a consumer using released ZORA peers', async () => {
+test(
+  'packed screen subpath exposes its public props to a consumer using released ZORA peers',
+  () => verifyPackedScreenContract(),
+  60_000,
+);
+
+async function verifyPackedScreenContract(): Promise<void> {
   const workspace = await mkdtemp(join(tmpdir(), 'studio-authoring-packed-screen-consumer-'));
   const npmCacheDirectory = join(workspace, 'npm-cache');
   const packageDirectory = join(workspace, 'package');
@@ -123,9 +129,15 @@ test('packed screen subpath exposes its public props to a consumer using release
   } finally {
     await rm(workspace, { force: true, recursive: true });
   }
-}, 60_000);
+}
 
-test('packed screen renders and handles authoring interactions through Vite, RNW, and published ZORA', async () => {
+test(
+  'packed screen renders and handles authoring interactions through Vite, RNW, and published ZORA',
+  () => verifyPackedBrowserConsumer(),
+  180_000,
+);
+
+async function verifyPackedBrowserConsumer(): Promise<void> {
   const workspace = await mkdtemp(join(tmpdir(), 'studio-authoring-packed-browser-consumer-'));
   const npmCacheDirectory = join(workspace, 'npm-cache');
   const packageDirectory = join(workspace, 'package');
@@ -375,4 +387,4 @@ test('packed screen renders and handles authoring interactions through Vite, RNW
   } finally {
     await rm(workspace, { force: true, recursive: true });
   }
-}, 180_000);
+}

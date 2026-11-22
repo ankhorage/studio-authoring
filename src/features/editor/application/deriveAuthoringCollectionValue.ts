@@ -102,7 +102,7 @@ export function readOrderedListValue(
   return unsupported(
     'Ordered-list authoring supports finite primitive choices or scalar string items.',
     [],
-  ) as ListResult;
+  );
 }
 
 /*** Validate one finite-choice ordered list. */
@@ -113,20 +113,20 @@ function readChoiceList(
 ): ListResult {
   if (value === undefined && optional)
     return { ok: true, item: { kind: 'choice', values }, items: [] };
-  if (!Array.isArray(value)) return invalid('Expected ordered-list array value.', []) as ListResult;
+  if (!Array.isArray(value)) return invalid('Expected ordered-list array value.', []);
   return value.some((candidate) => !values.some((allowed) => Object.is(allowed, candidate)))
-    ? (invalid('Ordered-list item is not one of the finite descriptor choices.', []) as ListResult)
-    : { ok: true, item: { kind: 'choice', values }, items: value as readonly AuthoringPrimitive[] };
+    ? invalid('Ordered-list item is not one of the finite descriptor choices.', [])
+    : { ok: true, item: { kind: 'choice', values }, items: value };
 }
 
 /*** Validate one open scalar-string ordered list. */
 function readStringList(value: unknown, optional: boolean): ListResult {
   if (value === undefined && optional)
     return { ok: true, item: { kind: 'scalar', scalarType: 'string' }, items: [] };
-  if (!Array.isArray(value)) return invalid('Expected ordered-list array value.', []) as ListResult;
+  if (!Array.isArray(value)) return invalid('Expected ordered-list array value.', []);
   return value.every((candidate) => typeof candidate === 'string')
     ? { ok: true, item: { kind: 'scalar', scalarType: 'string' }, items: value }
-    : (invalid('Ordered-list item must be a string.', []) as ListResult);
+    : invalid('Ordered-list item must be a string.', []);
 }
 
 /*** Create one invalid runtime-value diagnostic at a precise path. */

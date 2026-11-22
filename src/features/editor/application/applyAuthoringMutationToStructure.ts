@@ -1,15 +1,11 @@
-import {
-  deleteOwnProperty,
-  isRecord,
-  readOwnProperty,
-  setOwnProperty,
-} from '@ankhorage/utility/object';
+import { isRecord, readOwnProperty, setOwnProperty } from '@ankhorage/utility/object';
 
 import type { AuthoringMutation, AuthoringMutationResult, AuthoringStructure } from '../model.js';
 import { isAuthoringCollectionKeyAllowed } from '../utils/isAuthoringCollectionKeyAllowed.js';
 import { resolveAuthoringCollectionKey } from '../utils/resolveAuthoringCollectionKey.js';
 import { resolveAuthoringUnion } from '../utils/resolveAuthoringUnion.js';
 import { applyAuthoringMutation } from './applyAuthoringMutation.js';
+import { normalizeStructuredAuthoringValue } from './normalizeStructuredAuthoringValue.js';
 
 /*** Apply one neutral mutation against owner structure, preserving collection identity and active union semantics. */
 export function applyAuthoringMutationToStructure<T>(
@@ -46,7 +42,11 @@ export function applyAuthoringMutationToStructure<T>(
 
   return {
     ok: true,
-    value: normalizeStructuredValue(structure, applied.value, mutation.kind === 'unset') as T,
+    value: normalizeStructuredAuthoringValue(
+      structure,
+      applied.value,
+      mutation.kind === 'unset',
+    ) as T,
   };
 }
 
@@ -62,7 +62,7 @@ function replaceStructuredRoot(
   if (!validation.ok) return validation;
   return {
     ok: true,
-    value: normalizeStructuredValue(structure, mutation.value, false) as Readonly<
+    value: normalizeStructuredAuthoringValue(structure, mutation.value, false) as Readonly<
       Record<string, unknown>
     >,
   };
@@ -302,84 +302,6 @@ function validateUnionValue(
     );
   }
   return validateStructuredValue(resolved.selected.structure, value, mutation, path);
-}
-
-/*** Normalize known owner structure recursively while preserving unknown sibling fields. */
-function normalizeStructuredValue(
-  structure: AuthoringStructure,
-  value: unknown,
-  pruneEmptyOverrides: boolean,
-): unknown {
-  if (!isRecord(value)) return value;
-
-  if (structure.kind === 'union') {
-    const resolved = resolveAuthoringUnion(structure, value, []);
-    return resolved.ok && resolved.selected
-      ? normalizeStructuredValue(resolved.selected.structure, value, pruneEmptyOverrides)
-      : value;
-  }
-  if (structure.kind === 'object') {
-    return normalizeObject(structure, value, pruneEmptyOverrides);
-  }
-  if (structure.kind === 'entity-registry') {
-    return normalizeCollection(structure.value, value, pruneEmptyOverrides, false);
-  }
-  if (structure.kind === 'value-map') {
-    return normalizeCollection(structure.value, value, pruneEmptyOverrides, true);
-  }
-  return value;
-}
-
-/*** Normalize fixed object fields and prune empty optional override containers. */
-function normalizeObject(
-  structure: Extract<AuthoringStructure, { readonly kind: 'object' }>,
-  value: Readonly<Record<string, unknown>>,
-  pruneEmptyOverrides: boolean,
-): Readonly<Record<string, unknown>> {
-  const normalized = { ...value };
-  for (const field of structure.fields) {
-    const current = readOwnProperty<unknown>(normalized, field.name);
-    if (current === undefined) continue;
-    const next = normalizeStructuredValue(field.structure, current, pruneEmptyOverrides);
-    if (pruneEmptyOverrides && field.optional && isEmptyRecord(next)) {
-      deleteOwnProperty(normalized, field.name);
-    } else {
-      setOwnProperty(normalized, field.name, next);
-    }
-  }
-  return normalized;
-}
-
-/*** Normalize keyed values while pruning empty map overrides but never deleting stable entities. */
-function normalizeCollection(
-  valueStructure: AuthoringStructure,
-  value: Readonly<Record<string, unknown>>,
-  pruneEmptyOverrides: boolean,
-  pruneEntries: boolean,
-): Readonly<Record<string, unknown>> {
-  const normalized: Record<string, unknown> = {};
-  for (const [key, current] of Object.entries(value)) {
-    const next = normalizeStructuredValue(valueStructure, current, pruneEmptyOverrides);
-    if (pruneEntries && pruneEmptyOverrides && shouldPruneEmptyMapValue(valueStructure, next)) {
-      continue;
-    }
-    setOwnProperty(normalized, key, next);
-  }
-  return normalized;
-}
-
-/*** Remove empty object-valued map entries when every owner field is optional override state. */
-function shouldPruneEmptyMapValue(structure: AuthoringStructure, value: unknown): boolean {
-  return (
-    isEmptyRecord(value) &&
-    structure.kind === 'object' &&
-    structure.fields.every((field) => field.optional)
-  );
-}
-
-/*** Return whether a runtime value is an empty record. */
-function isEmptyRecord(value: unknown): boolean {
-  return isRecord(value) && Object.keys(value).length === 0;
 }
 
 /*** Create one structure-aware mutation rejection at the mutation's requested path. */
