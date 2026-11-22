@@ -7,6 +7,7 @@ import type {
   AuthoringEntityRegistryNode,
   AuthoringMutation,
   AuthoringOrderedListNode,
+  AuthoringValue,
   AuthoringValueMapNode,
 } from '../model.js';
 import { AuthoringEditor, type AuthoringEditorProps } from './AuthoringEditor.js';
@@ -99,24 +100,48 @@ function OrderedListItemActions(props: {
   const { index, model, onMutation } = props;
   return (
     <>
-      <Button variant="outline" disabled={index === 0} onPress={() => moveListItem(model, index, -1, onMutation)}>
+      <Button
+        variant="outline"
+        disabled={index === 0}
+        onPress={() => moveListItem(model, index, -1, onMutation)}
+      >
         Up
       </Button>
-      <Button variant="outline" disabled={index === model.items.length - 1} onPress={() => moveListItem(model, index, 1, onMutation)}>
+      <Button
+        variant="outline"
+        disabled={index === model.items.length - 1}
+        onPress={() => moveListItem(model, index, 1, onMutation)}
+      >
         Down
       </Button>
-      <Button variant="outline" onPress={() => removeListItem(model, index, onMutation)}>Remove</Button>
+      <Button variant="outline" onPress={() => removeListItem(model, index, onMutation)}>
+        Remove
+      </Button>
     </>
   );
 }
 
 /*** Replace one primitive list item while retaining every other owner-provided value. */
-function updateListItem(model: AuthoringOrderedListNode, index: number, value: string, onMutation: CollectionEditorProps['onMutation']): void {
-  setList(model, model.items.map((candidate, candidateIndex) => candidateIndex === index ? value : candidate), onMutation);
+function updateListItem(
+  model: AuthoringOrderedListNode,
+  index: number,
+  value: string,
+  onMutation: CollectionEditorProps['onMutation'],
+): void {
+  setList(
+    model,
+    model.items.map((candidate, candidateIndex) => (candidateIndex === index ? value : candidate)),
+    onMutation,
+  );
 }
 
 /*** Reposition one primitive list item by a relative destination. */
-function moveListItem(model: AuthoringOrderedListNode, index: number, offset: number, onMutation: CollectionEditorProps['onMutation']): void {
+function moveListItem(
+  model: AuthoringOrderedListNode,
+  index: number,
+  offset: number,
+  onMutation: CollectionEditorProps['onMutation'],
+): void {
   setList(model, moveOrderedListItem(model.items, index, index + offset), onMutation);
 }
 
@@ -198,23 +223,86 @@ function ValueMapEditor(props: {
   return (
     <Field label={model.label} description={model.description} required={!model.optional}>
       <View style={styles.membership}>
-        {model.entries.map((entry) => <ValueMapEntry key={entry.key} entry={entry} model={model} onMutation={onMutation} renderCustomControl={renderCustomControl} />)}
-        <ValueMapAdd model={model} keyValue={newKey} initialValue={initialValue} onMutation={onMutation} />
+        {model.entries.map((entry) => (
+          <ValueMapEntry
+            key={entry.key}
+            entry={entry}
+            model={model}
+            onMutation={onMutation}
+            renderCustomControl={renderCustomControl}
+          />
+        ))}
+        <ValueMapAdd
+          model={model}
+          keyValue={newKey}
+          initialValue={initialValue}
+          onMutation={onMutation}
+        />
       </View>
     </Field>
   );
 }
 
 /*** Render one keyed map entry with its editable identity and recursive authoring value. */
-function ValueMapEntry(props: { readonly entry: AuthoringValueMapNode['entries'][number]; readonly model: AuthoringValueMapNode; readonly onMutation: CollectionEditorProps['onMutation']; readonly renderCustomControl?: CollectionEditorProps['renderCustomControl'] }) {
+function ValueMapEntry(props: {
+  readonly entry: AuthoringValueMapNode['entries'][number];
+  readonly model: AuthoringValueMapNode;
+  readonly onMutation: CollectionEditorProps['onMutation'];
+  readonly renderCustomControl?: CollectionEditorProps['renderCustomControl'];
+}) {
   const { entry, model, onMutation, renderCustomControl } = props;
-  return <View style={styles.valueMapRow}><View style={styles.valueMapKey}><TextInput defaultValue={entry.key} readOnly={!entry.authored} autoCapitalize="none" onEndEditing={(event: NativeSyntheticEvent<TextInputEndEditingEventData>) => renameValueMapEntry(model, entry.key, entry.authored, event.nativeEvent.text, onMutation)} /></View><View style={styles.valueMapValue}><AuthoringEditor model={entry.value} onMutation={onMutation} renderCustomControl={renderCustomControl} /></View>{entry.authored ? <Button variant="outline" onPress={() => removeMapEntry(model, entry.key, onMutation)}>Remove</Button> : null}</View>;
+  return (
+    <View style={styles.valueMapRow}>
+      <View style={styles.valueMapKey}>
+        <TextInput
+          defaultValue={entry.key}
+          readOnly={!entry.authored}
+          autoCapitalize="none"
+          onEndEditing={(event: NativeSyntheticEvent<TextInputEndEditingEventData>) =>
+            renameValueMapEntry(
+              model,
+              entry.key,
+              entry.authored,
+              event.nativeEvent.text,
+              onMutation,
+            )
+          }
+        />
+      </View>
+      <View style={styles.valueMapValue}>
+        <AuthoringEditor
+          model={entry.value}
+          onMutation={onMutation}
+          renderCustomControl={renderCustomControl}
+        />
+      </View>
+      {entry.authored ? (
+        <Button variant="outline" onPress={() => removeMapEntry(model, entry.key, onMutation)}>
+          Remove
+        </Button>
+      ) : null}
+    </View>
+  );
 }
 
 /*** Render structural insertion only when an owner-compatible key and initial value exist. */
-function ValueMapAdd(props: { readonly model: AuthoringValueMapNode; readonly keyValue: string | undefined; readonly initialValue: unknown; readonly onMutation: CollectionEditorProps['onMutation'] }) {
+function ValueMapAdd(props: {
+  readonly model: AuthoringValueMapNode;
+  readonly keyValue: string | undefined;
+  readonly initialValue: AuthoringValue | undefined;
+  readonly onMutation: CollectionEditorProps['onMutation'];
+}) {
   const { model, keyValue, initialValue, onMutation } = props;
-  return keyValue === undefined || initialValue === undefined ? null : <Button variant="outline" onPress={() => onMutation({ kind: 'set', path: [...model.path, keyValue], value: initialValue })}>Add entry</Button>;
+  return keyValue === undefined || initialValue === undefined ? null : (
+    <Button
+      variant="outline"
+      onPress={() =>
+        onMutation({ kind: 'set', path: [...model.path, keyValue], value: initialValue })
+      }
+    >
+      Add entry
+    </Button>
+  );
 }
 
 /*** Rename a map key only when it is authored and does not collide with an existing entry. */

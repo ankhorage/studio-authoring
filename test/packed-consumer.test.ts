@@ -99,6 +99,8 @@ test('packed screen subpath exposes its public props to a consumer using release
       join(consumerDirectory, 'screen-contract.tsx'),
       `
         import {
+          AuthoringEditor,
+          type AuthoringEditorProps,
           ScreensAuthoringScreen,
           type ScreensAuthoringScreenProps,
         } from '@ankhorage/studio-authoring/screens';
@@ -110,7 +112,8 @@ test('packed screen subpath exposes its public props to a consumer using release
           onCreateScreen: async () => ({ status: 'saved' }),
         };
 
-        void [props, ScreensAuthoringScreen];
+        const editorProps = {} as AuthoringEditorProps;
+        void [props, editorProps, AuthoringEditor, ScreensAuthoringScreen];
       `,
     );
     await Bun.$`bun install --cwd ${consumerDirectory}`;
