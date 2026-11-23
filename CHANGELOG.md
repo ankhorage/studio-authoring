@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- 918534b: Add portable Inspector action, selection, and Edit/Preview models.
+
 ## 0.4.0
 
 ### Minor Changes

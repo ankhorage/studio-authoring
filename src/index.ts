@@ -1,4 +1,5 @@
 /*** Public reusable authoring-core API. */
+export * from './features/authoring/authoringContextActions.js';
 export * from './features/authoring/authoringState.js';
 export * from './features/inspector/inspectorRoute.js';
 export * from './features/manifest/manifestDraft.js';
