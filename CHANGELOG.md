@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+
+### Minor Changes
+
+- 9bade57: Expose portable binding policy and host-injected capability catalog composition.
+
 ## 0.8.0
 
 ### Minor Changes
