@@ -3,8 +3,8 @@ import { expect, test } from 'bun:test';
 
 import { deriveAuthoringModel } from '../editor/application/deriveAuthoringModel.js';
 import {
-  resolveInstancePropertyAuthoring,
   type AuthoringMetaRegistry,
+  resolveInstancePropertyAuthoring,
 } from './instancePropertyAuthoring.js';
 
 const registry: AuthoringMetaRegistry = {
@@ -65,7 +65,6 @@ test('derives grouped instance fields and owner defaults without exposing theme 
   expect(authoring.componentName).toBe('Heading');
   expect(authoring.groups.map((group) => group.category)).toEqual(['Content', 'Semantics']);
   const [content, semantics] = authoring.groups;
-  if (!content || !semantics) throw new Error('Expected grouped Heading authoring.');
   expect(
     deriveAuthoringModel({ ...content, value: node.props ?? {}, label: content.category }),
   ).toMatchObject({
@@ -99,7 +98,6 @@ test('preserves media hints and rejects unknown owner property types', () => {
     registry,
   );
   const [imageGroup] = image.groups;
-  if (!imageGroup) throw new Error('Expected Image authoring.');
   expect(
     deriveAuthoringModel({
       ...imageGroup,
@@ -116,7 +114,6 @@ test('preserves media hints and rejects unknown owner property types', () => {
     registry,
   );
   const [listGroup] = list.groups;
-  if (!listGroup) throw new Error('Expected List authoring.');
   expect(
     deriveAuthoringModel({ ...listGroup, value: { items: [] }, label: listGroup.category }),
   ).toMatchObject({
