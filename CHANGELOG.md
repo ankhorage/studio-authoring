@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- 9d70659: Expose portable instance-property metadata projection for neutral authoring editors.
+
 ## 0.7.0
 
 ### Minor Changes
