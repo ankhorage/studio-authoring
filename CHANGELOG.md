@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- 3e2023a: Expose the portable descriptor-driven authoring editor, including its neutral model derivation and validated manifest mutation helpers.
+
 ## 0.5.0
 
 ### Minor Changes
