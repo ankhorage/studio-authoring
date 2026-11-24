@@ -1,4 +1,5 @@
 /*** Public reusable authoring-core API. */
+export * from './features/authoring/authoringContextActions.js';
 export * from './features/authoring/authoringState.js';
 export * from './features/editor/application/applyAuthoringMutation.js';
 export * from './features/editor/application/applyAuthoringMutationToStructure.js';
