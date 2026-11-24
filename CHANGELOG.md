@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- 750d7a0: Expose portable manifest media-authoring policy for IDs, references, URL assets, usage analysis, and safe removal.
+
 ## 0.6.0
 
 ### Minor Changes
