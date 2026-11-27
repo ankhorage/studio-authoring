@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0
+
+### Minor Changes
+
+- 3f50627: Add a host metadata projection API for selected binding input fields.
+
 ## 0.9.0
 
 ### Minor Changes
