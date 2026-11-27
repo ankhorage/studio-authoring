@@ -33,6 +33,19 @@ export interface BindingInputFieldOption {
   readonly required: boolean;
 }
 
+/*** Host-owned metadata projected onto one input field without changing portable policy output. */
+export interface BindingInputFieldMetadataProjection<TMetadata> {
+  readonly inputField: BindingInputFieldOption;
+  readonly metadata: TMetadata;
+}
+
+/*** Portable context supplied to a host when it projects selected input-field metadata. */
+export interface BindingInputFieldMetadataProjectionContext {
+  readonly inputField: BindingInputFieldOption;
+  readonly schema: DataSchema | undefined;
+  readonly api: ApiDefinition | undefined;
+}
+
 export interface BindingResponsePathOption {
   readonly path: string;
   readonly label: string;
@@ -56,6 +69,31 @@ export function findBindingCapabilityOption(
   capability: Capability['id'],
 ): BindingCapabilityOption | undefined {
   return options.find((option) => option.capability.id === capability);
+}
+
+/***
+ * Project host-owned metadata from an already selected portable option.
+ *
+ * The policy result is neither changed nor annotated: hosts receive an overlay they can apply in
+ * their own presentation model. API schema references are resolved only to provide projection
+ * context, keeping host metadata and diagnostics outside the portable binding-policy contract.
+ */
+export function projectBindingInputFieldMetadata<TMetadata>(args: {
+  readonly option: BindingCapabilityOption;
+  readonly apis: ApiDefinitionRegistry;
+  readonly project: (context: BindingInputFieldMetadataProjectionContext) => TMetadata;
+}): readonly BindingInputFieldMetadataProjection<TMetadata>[] {
+  const apiOperation = findApiOperationForCapability(args.apis, args.option.capability);
+  const api = apiOperation?.api;
+  const schemas = collectInputFieldSchemas(args.option.capability, api, apiOperation?.operation);
+  return args.option.inputFields.map((inputField) => ({
+    inputField,
+    metadata: args.project({
+      inputField,
+      schema: schemas.get(inputField.name),
+      api,
+    }),
+  }));
 }
 
 /*** Add or replace one prop binding while normalizing component identity in the portable registry. */
@@ -158,6 +196,47 @@ function projectObjectFields(schema: DataSchema | undefined): readonly BindingIn
     value: projectSchema(value),
     required: schema?.required?.includes(name) ?? false,
   }));
+}
+
+/*** Find the API operation represented by a portable generated API capability. */
+function findApiOperationForCapability(
+  apis: ApiDefinitionRegistry,
+  capability: Capability,
+): { readonly api: ApiDefinition; readonly operation: DataOperationConfig } | undefined {
+  for (const api of Object.values(apis)) {
+    for (const endpoint of Object.values(api.endpoints)) {
+      for (const operation of Object.values(endpoint.operations)) {
+        if (capability.id === `api.${api.id}.${operation.id}`) return { api, operation };
+      }
+    }
+  }
+  return undefined;
+}
+
+/*** Resolve the source schemas for portable input fields, preserving parameter precedence. */
+function collectInputFieldSchemas(
+  capability: Capability,
+  api: ApiDefinition | undefined,
+  operation: DataOperationConfig | undefined,
+): ReadonlyMap<string, DataSchema | undefined> {
+  const fields = new Map<string, DataSchema | undefined>();
+  for (const parameter of operation?.request?.parameters ?? []) {
+    fields.set(parameter.name, resolveSchema(parameter, api));
+  }
+
+  const requestSchema = resolveSchema(operation?.request ?? capability.input, api);
+  for (const [name, schema] of Object.entries(requestSchema?.properties ?? {})) {
+    if (!fields.has(name)) fields.set(name, schema);
+  }
+  return fields;
+}
+
+/*** Resolve an inline or API-local referenced schema for host projection only. */
+function resolveSchema(
+  slot: { readonly schema?: DataSchema; readonly schemaRef?: { readonly id: string } } | undefined,
+  api: ApiDefinition | undefined,
+): DataSchema | undefined {
+  return slot?.schema ?? (slot?.schemaRef ? api?.schemas?.[slot.schemaRef.id] : undefined);
 }
 
 /*** Project the response root and its immediate fields into deterministic selectable paths. */
